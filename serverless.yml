@@ -1,0 +1,219 @@
+service: tasks-service
+
+plugins:
+  - serverless-deployment-bucket
+  - serverless-localstack
+  - serverless-sync-s3
+  - serverless-step-functions
+  - serverless-plugin-common-excludes
+  - serverless-plugin-include-dependencies
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: ${opt:stage, self:custom.defaultStage}
+  region: ${opt:region,'us-east-1'}
+  stackName: tasks-stack-${self:provider.stage}
+  timeout: 15
+  
+  iam: # TODO: use iam role per lambda, and make it more strict
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:*
+          Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/tasksTable-${self:provider.stage}'
+        - Effect: Allow
+          Action:
+            - dynamodb:*
+          Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/tasksTable-${self:provider.stage}/index/*'
+        - Effect: Allow
+          Action:
+            - sqs:*
+          Resource: !Sub 'arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:tasksQueue-${self:provider.stage}.fifo'
+        - Effect: Allow
+          Action:
+            - states:*
+          Resource: !Sub 'arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:tasksStateMachine-${self:provider.stage}'
+        - Effect: Allow
+          Action:
+            - cloudwatch:PutMetricData
+          Resource: '*'
+
+package:
+  excludeDevDependencies: true # plugins take care of dependency packaging
+  exclude:
+    - ./**
+    - "!node_modules/uuid/**"
+    - "!node_modules/axios/**"
+  
+custom:
+  region: ${self:provider.region,'us-east-1'}
+  localstack:
+    host: http://127.0.0.1
+    stages: [local]
+    debug: true
+  defaultStage: local
+
+functions:
+  getTask:
+    handler: api/index.handler
+    events:
+      - http: 'GET /tasks/{proxy+}'
+    environment:
+      TASKS_DYNAMO_DB: 
+        Ref: tasksDatabase
+  createtask:
+    handler: api/index.handler
+    events:
+      - http: 'POST /tasks'
+    environment:
+      TASKS_DYNAMO_DB: 
+        Ref: tasksDatabase
+      taskS_SQS_QUEUE:
+        Ref: tasksFifoQueue
+  cronLambda:
+    handler: lambdas/cron.handler
+    timeout: 60 # Set the timeout in seconds
+    events:
+      - schedule:
+          rate: rate(1 minute)
+          enabled: true
+    environment:
+      TASKS_DYNAMO_DB: 
+        Ref: tasksDatabase
+      taskS_SQS_QUEUE:
+        Ref: tasksFifoQueue
+      TASKS_DYNAMO_DB_INDEX:
+        'statusStartExecAtIndex'
+  processSqsRecords:
+    handler: lambdas/sqsProcessor.handler
+    timeout: 60 # Set the timeout in seconds
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [tasksFifoQueue, Arn]
+    batchSize: 10
+    functionResponseType: ReportBatchItemFailures
+    environment:
+      TASKS_STATE_MACHINE: 
+        Ref: tasksStateMachine
+      TASKS_SQS_QUEUE:
+        Ref: tasksFifoQueue
+      TASKS_DYNAMO_DB: 
+        Ref: tasksDatabase
+  taskExecutor:
+    handler: lambdas/taskExecutor.handler
+    environment:
+      TASKS_DYNAMO_DB: 
+        Ref: tasksDatabase
+      SERVICE_NAME: ${self:service}
+  handleFailure:
+    handler: lambdas/handleFailure.handler
+    environment:
+      TASKS_DYNAMO_DB: 
+        Ref: tasksDatabase
+      SERVICE_NAME: ${self:service}
+
+resources:
+  Resources:
+    tasksDatabase:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: tasksTable-${self:provider.stage}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: taskStatus
+            AttributeType: S
+          - AttributeName: startExecutionAt
+            AttributeType: N
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: statusStartExecAtIndex
+            KeySchema:
+              - AttributeName: taskStatus
+                KeyType: HASH
+              - AttributeName: startExecutionAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+    tasksFifoQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: tasksQueue-${self:provider.stage}.fifo
+        FifoQueue: true
+        ContentBasedDeduplication: true
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt: [tasksDlqQueue, Arn]
+          maxReceiveCount: 3 # Maximum number of receives before sending to DLQ
+    tasksDlqQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: tasksDlqQueue-${self:provider.stage}.fifo
+        FifoQueue: true
+    tasksStateMachine:
+      Type: "AWS::StepFunctions::StateMachine"
+      Properties:
+        StateMachineName: tasksStateMachine-${self:provider.stage}
+        # StateMachineType: EXPRESS
+        RoleArn: !Sub '${tasksStateMachineRole.Arn}'
+        DefinitionString: !Sub |
+          {
+            "StartAt": "Wait",
+            "States": {
+              "Wait": {
+                "Type": "Wait",
+                "TimestampPath": "$.timestamp",
+                "Next": "ExecuteTask"
+              },
+              "ExecuteTask": {
+                "Type": "Task",
+                "Resource": "${TaskExecutorLambdaFunction.Arn}",
+                "Retry": [
+                  {
+                    "ErrorEquals": ["States.ALL"],
+                    "IntervalSeconds": 5,
+                    "MaxAttempts": 3
+                  }
+                ],
+                "Catch": [
+                  {
+                    "ErrorEquals": ["States.ALL"],
+                    "Next": "HandleRetryFailure",
+                    "ResultPath": "$.cause"
+                  }
+                ],
+                "End": true
+              },
+              "HandleRetryFailure": {
+                "Type": "Task",
+                "Resource": "${HandleFailureLambdaFunction.Arn}",
+                "End": true
+              }
+            }
+          }
+    tasksStateMachineRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: !Sub 'states.${AWS::Region}.amazonaws.com'
+              Action: 'sts:AssumeRole'
+        Policies:
+          - PolicyName: lambda
+            PolicyDocument:
+              Statement:
+                - Effect: Allow
+                  Action: 'lambda:InvokeFunction'
+                  Resource:
+                    - !Sub '${TaskExecutorLambdaFunction.Arn}'
+                    - !Sub '${HandleFailureLambdaFunction.Arn}'
+                    
