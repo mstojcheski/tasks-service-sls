@@ -70,7 +70,7 @@ functions:
     environment:
       TASKS_DYNAMO_DB: 
         Ref: tasksDatabase
-      taskS_SQS_QUEUE:
+      TASKS_SQS_QUEUE:
         Ref: tasksFifoQueue
   cronLambda:
     handler: lambdas/cron.handler
@@ -82,7 +82,7 @@ functions:
     environment:
       TASKS_DYNAMO_DB: 
         Ref: tasksDatabase
-      taskS_SQS_QUEUE:
+      TASKS_SQS_QUEUE:
         Ref: tasksFifoQueue
       TASKS_DYNAMO_DB_INDEX:
         'statusStartExecAtIndex'

@@ -83,7 +83,6 @@ const main = async() => {
     const response = await sendHttpPostRequest(
         `${BASE_DOMAIN}/tasks`, 
         {
-            'url': 'https://httpbin.org/post', 
             'hours': 0,
             'minutes': 1, 
             'seconds': 5

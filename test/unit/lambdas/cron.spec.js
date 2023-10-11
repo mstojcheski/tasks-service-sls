@@ -20,6 +20,6 @@ describe('Cron Lambda Handler', () => {
         await handler(event);
         
         expect(querytasksDue).toHaveBeenCalled();
-        expect(pushRecordsToFifoSQS).toHaveBeenCalledWith(process.env.taskS_SQS_QUEUE, mockData);
+        expect(pushRecordsToFifoSQS).toHaveBeenCalledWith(process.env.TASKS_SQS_QUEUE, mockData);
     });
 });

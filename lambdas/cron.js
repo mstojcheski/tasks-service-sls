@@ -1,8 +1,8 @@
 const { convertEventTimeToEpochSeconds } = require('../lib/utils');
-const { pushRecordsToFifoSQS, querytasksDue } = require('../lib/aws');
+const { pushRecordsToFifoSQS, queryTasksDue } = require('../lib/aws');
 const config = require('../config');
 const dynamoDBTableName = process.env.TASKS_DYNAMO_DB;
-const queueUrl = process.env.taskS_SQS_QUEUE;
+const queueUrl = process.env.TASKS_SQS_QUEUE;
 const DYNAMODB_INDEX_NAME = process.env.TASKS_DYNAMO_DB_INDEX;
 
 exports.handler = async (event) => {
@@ -12,7 +12,7 @@ exports.handler = async (event) => {
         // query tasks with `status`: scheduled and `startExecutionAt`: <= eventTimeInUtc
         const eventTimeInEpochSeconds = convertEventTimeToEpochSeconds(eventTimeInUtc);
         const currentJobs = 
-            await querytasksDue(
+            await queryTasksDue(
                 dynamoDBTableName,
                 DYNAMODB_INDEX_NAME,
                 config.TASK_STATUS_VALUES.SCHEDULED,

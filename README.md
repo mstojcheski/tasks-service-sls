@@ -3,19 +3,20 @@
 Note: this is playground service used to get up to speed with LocalStack (https://docs.localstack.cloud/getting-started)
 
 The idea for functionality service provides came from the following blog posts:
-https://theburningmonk.com/2019/05/using-cloudwatch-and-lambda-to-implement-ad-hoc-scheduling/
-https://theburningmonk.com/2019/03/dynamodb-ttl-as-an-ad-hoc-scheduling-mechanism/
-and the following project: https://github.com/localstack/localstack-demo
+- https://theburningmonk.com/2019/05/using-cloudwatch-and-lambda-to-implement-ad-hoc-scheduling/
+- https://theburningmonk.com/2019/03/dynamodb-ttl-as-an-ad-hoc-scheduling-mechanism/
+and the following project: 
+- https://github.com/localstack/localstack-demo
 
 The Tasks Service is a comprehensive solution that combines ExpressJS-based APIs with AWS services like API Gateway, Lambda Functions, DynamoDB, SQS, and State Machine. Together, these components create a versatile and scalable platform for processing tasks efficiently.
 
 The figure below outlines the application architecture with the different components and services involved in processing the tasks.
 
-<img src="" style="width: 700px" />
+<img src="fixtures/architecture.png" style="width: 700px" />
 
 The graph of the AWS SFN State Machine looks like this:
 
-<img src="" style="width: 700px" />
+<img src="fixtures/state-machine.png" style="width: 700px" />
 
 
 ### How does it work
@@ -91,7 +92,7 @@ Note: The E2E test script currenty does the following:
 2) Then the test queries the DB and outputs the DB record of the created task in the console. In this way, the updates on the task status can be observed. The task status will go through the phases `SCHEDULED->IN_PROGRESS->COMPLETED|FAILED` as the task is being processed by the backend services (Lambda functions, Step Functions state machine).
 3) Test ends either when task status is updated to `COMPLETED|FAILED` or after hardcoded timeout of 3 minutes.
 
-<img src="" style="width: 700px" />
+<img src="fixtures/e2e-tests.png" style="width: 700px" />
 
 To lint the code, run the following command
 ```

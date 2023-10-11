@@ -5,8 +5,8 @@ const {
 } = require('../lib/aws');
 const config = require('../config');
 
-const tasksStateMachineArn = process.env.taskS_STATE_MACHINE;
-const tasksQueueUrl = process.env.taskS_SQS_QUEUE;
+const tasksStateMachineArn = process.env.TASKS_STATE_MACHINE;
+const tasksQueueUrl = process.env.TASKS_SQS_QUEUE;
 const dynamoDBTableName = process.env.TASKS_DYNAMO_DB;
 
 exports.handler = async (event) => {

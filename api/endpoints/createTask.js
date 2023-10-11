@@ -11,7 +11,7 @@ const { pushToSQSQueue, putItemInDB } = require('../../lib/aws');
 const config = require('../../config');
 
 const dynamoDBTableName = process.env.TASKS_DYNAMO_DB;
-const queueUrl = process.env.taskS_SQS_QUEUE;
+const queueUrl = process.env.TASKS_SQS_QUEUE;
 
 module.exports = () =>
     asyncHandler(async (req, res) => {
