@@ -57,7 +57,7 @@ Note: If `SQS_ENDPOINT_STRATEGY=domain` is not passed as env var in the command,
 
 Once LocalStack is started successfully, you will see the following output in your terminal: 
 
-<img src="fixtures/deployed-local.png" style="width: 700px" />
+<img src="fixtures/localstack-ready.output.png" style="width: 700px" />
 
 ## Installing dependencies & running the application locally on macOS
 
@@ -69,7 +69,7 @@ make deploy-local
 Note: this command will deploy the Serverless app (the CloudFormation stack) with LocalStack on your machine. 
 The output of the command gives the URL of the deployed API Gateway REST API. 
 
-<img src="" style="width: 700px" />
+<img src="fixtures/deployed-local.png" style="width: 700px" />
 
 You can use this URL to manually query the API endpoints with tools like `curl` or `Postman`. 
 Additionally, if you need to query other backend components like CloudWatch, DynamoDB, SQS, etc. You will need to have `aws cli` installed in your terminal. Once installed, you need to set up an `aws profile` with dymmy credentials (see: https://docs.localstack.cloud/references/credentials/#alphanumeric-string).
