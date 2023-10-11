@@ -46,6 +46,7 @@ Please make sure you have installed the following tools on your machine:
 * `make`
 
 ## Running LocalStack on your machine
+* Please make sure docker is running on your machine, before starting LocalStack
 
 In a separate Terminal Tab, use the `localstack` CLI command to get started:
 
@@ -56,9 +57,7 @@ Note: If `SQS_ENDPOINT_STRATEGY=domain` is not passed as env var in the command,
 
 Once LocalStack is started successfully, you will see the following output in your terminal: 
 
-* Please make sure docker is running on your machine, before starting LocalStack
-
-<img src="fixtures/localstack-ready.output.png" style="width: 700px" />
+<img src="fixtures/deployed-local.png" style="width: 700px" />
 
 ## Installing dependencies & running the application locally on macOS
 
