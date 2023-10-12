@@ -18,8 +18,6 @@ exports.handler = async (event) => {
             console.log('Processing message:', body);
             // Start AWS Step Functions execution for each record
             await startStepFunctionExecution(tasksStateMachineArn, body);
-            // Delete the processed message from the queue
-            await deleteMessageFromQueue(tasksQueueUrl, record.receiptHandle);
             // update status of task from scheduled to in_progress
             await updateItemInDB(
                 dynamoDBTableName,
@@ -27,6 +25,8 @@ exports.handler = async (event) => {
                 config.TASK_STATUS_NAME,
                 config.TASK_STATUS_VALUES.IN_PROGRESS
             );
+            // Delete the processed message from the queue
+            await deleteMessageFromQueue(tasksQueueUrl, record.receiptHandle);
         }
         return 'Batch processing completed.';
     } catch (error) {

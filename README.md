@@ -26,7 +26,7 @@ The backend stores the scheduled tasks in a DynamoDB table (please see DB Schema
 ### DB Schema
 The DB Table holds the following details:
 * id (the partition key of the table) 
-* timestamp (the timestamp when the webook should be executed)
+* timestamp (the timestamp when the task should be executed)
 * startExecutionAt (a timestamp that is 2 minutes before the original timestamp, this is used by the `cron` to trigger execution ~2 minutes in advance)
 * taskStatus (one of `SCHEDULED|IN_PROGRESS|COMPLETED|FAILED`)
 * lastUpdatedAt (the timestamp when the task was last updated by the backend components)

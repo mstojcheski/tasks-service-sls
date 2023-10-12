@@ -8,12 +8,6 @@ const dynamoDBTableName = process.env.TASKS_DYNAMO_DB;
 const serviceName = process.env.SERVICE_NAME;
 const region = process.env.AWS_REGION;
 
-const headerConfig = {
-    headers: {
-        'User-Agent': `${serviceName}-${region}`
-    }
-};
-
 exports.handler = async (event) => {
     console.log('Received event:', JSON.stringify(event));
     try {
