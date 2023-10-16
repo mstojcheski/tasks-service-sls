@@ -2,9 +2,9 @@
 
 Note: this is playground service used to get up to speed with LocalStack (https://docs.localstack.cloud/getting-started)
 
-The idea for functionality service provides came from the following blog posts:
+The idea for the functionality this service provides came from the following blog posts:
 - https://theburningmonk.com/2019/05/using-cloudwatch-and-lambda-to-implement-ad-hoc-scheduling/
-- https://theburningmonk.com/2019/03/dynamodb-ttl-as-an-ad-hoc-scheduling-mechanism/
+- https://theburningmonk.com/2019/03/dynamodb-ttl-as-an-ad-hoc-scheduling-mechanism/ 
 and the following project: 
 - https://github.com/localstack/localstack-demo
 
