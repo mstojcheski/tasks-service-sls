@@ -23,7 +23,8 @@ module.exports = () =>
             }
 
             const { hours, minutes, seconds } = req.body;
-            const timestamp = calculateFutureTimestamp(hours, minutes, seconds);            
+            // explicitly cast input to number
+            const timestamp = calculateFutureTimestamp(Number(hours), Number(minutes), Number(seconds));            
             const startExecutionAt = subtractMinutesFromISO8601(
                 timestamp, 
                 config.START_EXEC_BEFORE_MINUTES

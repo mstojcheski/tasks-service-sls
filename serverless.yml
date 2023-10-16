@@ -63,7 +63,7 @@ functions:
     environment:
       TASKS_DYNAMO_DB: 
         Ref: tasksDatabase
-  createtask:
+  createTask:
     handler: api/index.handler
     events:
       - http: 'POST /tasks'
